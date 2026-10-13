@@ -1,6 +1,6 @@
-# Manager Library — un solo comando: `docker compose up -d --build` (RNF-5, T-20).
-# El motor arranca VACÍO: sin DDL ni scripts de init (Art. V, ADR-001).
-# El esquema lo crean las migraciones de la API al arrancar.
+# Manager Library — one command: `docker compose up -d --build` (RNF-5, T-20).
+# The engine starts EMPTY: no DDL and no init scripts (Art. V, ADR-001).
+# The API migrations create the schema at startup.
 
 name: manager-library
 
