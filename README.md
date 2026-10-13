@@ -13,7 +13,7 @@
 
 Red `library-net`; volúmenes `db-data` (datos) y `covers` (portadas).
 
-**Este repositorio no contiene `CREATE TABLE` ni scripts en `docker-entrypoint-initdb.d`** (Art. V, ADR-001). Todo el DDL vive en
+**Este repositorio no contiene DDL (creación de tablas) ni scripts en `docker-entrypoint-initdb.d`** (Art. V, ADR-001). Todo el DDL vive en
 las migraciones de la API.
 
 ## Cómo se usa (un solo comando)
@@ -42,7 +42,7 @@ curl http://localhost:8000/api/v1/health          # {"status":"ok"}
 docker compose exec db psql -U library -d library -c "\dt library.*"
 
 # 3. Este repo no crea tablas
-grep -ri "create table" . || echo "sin DDL en infra"
+grep -riE "create[[:space:]]+table" --exclude-dir=.git . || echo "sin DDL en infra"
 
 # 4. Iniciar sesión con el admin del .env
 curl -s -X POST http://localhost:8000/api/v1/auth/login \
