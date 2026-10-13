@@ -1,0 +1,72 @@
+# Manager Library — un solo comando: `docker compose up -d --build` (RNF-5, T-20).
+# El motor arranca VACÍO: sin CREATE TABLE ni scripts de init (Art. V, ADR-001).
+# El esquema lo crean las migraciones de la API al arrancar.
+
+name: manager-library
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-library}
+      POSTGRES_USER: ${POSTGRES_USER:-library}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD en .env}
+      TZ: UTC
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks: [library-net]
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build: ../test-manager-library-3145556-api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      APP_KEY: ${APP_KEY:?Define APP_KEY en .env}
+      APP_ENV: production
+      APP_DEBUG: "false"
+      LOG_CHANNEL: stderr
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: ${POSTGRES_DB:-library}
+      DB_USERNAME: ${POSTGRES_USER:-library}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      SESSION_DRIVER: array
+      CACHE_STORE: array
+      QUEUE_CONNECTION: sync
+      JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET en .env}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:?Define ADMIN_USERNAME en .env}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Define ADMIN_PASSWORD en .env}
+      COVERS_DIR: /app/storage/app/covers
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+      CLOCK_OFFSET_DAYS: ${CLOCK_OFFSET_DAYS:-0}
+    volumes:
+      - covers:/app/storage/app/covers
+    networks: [library-net]
+    ports:
+      - "8000:8000"
+
+  app:
+    build:
+      context: ../test-manager-library-3145556-app
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000/api/v1}
+    depends_on: [api]
+    networks: [library-net]
+    ports:
+      - "5173:80"
+
+networks:
+  library-net:
+
+volumes:
+  db-data:
+  covers:
